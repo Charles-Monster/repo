@@ -1,3 +1,4 @@
+import network
 class gpio:
     def __init__(self):
         self._D0=16
@@ -45,4 +46,55 @@ class gpio:
     @property
     def SDD2(self):
         return self._SDD2
-    
+class wifi:
+    def __init__(self,ssid=None,password=None):
+        self.sta=network.WLAN(network.STA_IF)
+        self.ap=network.WLAN(network.AP_IF)
+        self.ssid=ssid
+        self.password=password
+        self.ap_active=False
+        self.sta_active=False
+        self.ip=None
+    def setup(self,ap_active=False,sta_active=False):
+        """設定WIFI模組
+        ap_active: AP模式是否啟用
+        sta_active: STA模式是否啟用
+        使用方法:
+        wi.setup(ap_active=True|False,sta_active=True|False)
+        """
+        self.ap_active=ap_active
+        self.sta_active=sta_active
+        self.ap.active(ap_active)
+        self.sta.active(sta_active)
+    def scan(self):
+        """
+        搜尋WIFI
+        返回:WIFI列表
+
+        使用方法:
+        wi.scan()
+        """
+        if self.sta_active:
+            wifi_list=self.sta.scan()
+            print("Scan result:")
+            for i in range(len(wifi_list)):
+                print(wifi_list[i][0])
+        else:
+            print("STA模式未啟用")
+    def connect(self,ssid=None,password=None)->bool:
+        ssid=ssid if ssid is not None else self.ssid
+        password=password if password is not None else self.password
+        if not self.sta_active:
+            print("STA模式未啟用")
+            return False
+        if ssid is None or password is None:
+            print("WIFI 名稱或密碼未設定")
+            return False
+        if self.sta_active:
+            self.sta.connect(ssid,password)
+            while not (self.sta.isconnected()):
+                #print(f"連線中...")
+                pass
+            self.ip=self.sta.ifconfig()[0]
+            print("connet successfully ",self.sta.ifconfig())
+            return True
