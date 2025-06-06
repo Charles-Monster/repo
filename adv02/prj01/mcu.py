@@ -1,5 +1,4 @@
 import network
-from machine import Pin, ADC
 
 
 class gpio:
@@ -13,8 +12,8 @@ class gpio:
         self._D6 = 12
         self._D7 = 13
         self._D8 = 15
-        self._SDD3 = 10
-        self._SDD2 = 9
+        self._sDD3 = 10
+        self._sDD3 = 9
 
     @property
     def D0(self):
@@ -71,10 +70,11 @@ class wifi:
         self.sta_active = False
         self.ip = None
 
-    def setup(self, ap_active=False, sta_active=False):
-        """設定WIFI模組
-        ap_active: AP模式是否啟用
-        sta_active: STA模式是否啟用
+    def setup(self, ap_active=True, sta_active=False):
+        """
+        設定wifi模組
+        ap_active:是否開啟AP模式
+        sta_active:是否開啟STA模式
         使用方法:
         wi.setup(ap_active=True|False,sta_active=True|False)
         """
@@ -87,102 +87,55 @@ class wifi:
         """
         搜尋WIFI
         返回:WIFI列表
-
         使用方法:
         wi.scan()
         """
         if self.sta_active:
             wifi_list = self.sta.scan()
-            print("Scan result:")
+            print("scan result:")
             for i in range(len(wifi_list)):
                 print(wifi_list[i][0])
         else:
-            print("STA模式未啟用")
+            print("sta 模式未啟用")
 
     def connect(self, ssid=None, password=None) -> bool:
         ssid = ssid if ssid is not None else self.ssid
         password = password if password is not None else self.password
+
         if not self.sta_active:
-            print("STA模式未啟用")
+            print("sta 模式未啟用")
             return False
+
         if ssid is None or password is None:
-            print("WIFI 名稱或密碼未設定")
+            print("WIFI名稱或密碼未設定")
             return False
+
         if self.sta_active:
             self.sta.connect(ssid, password)
             while not (self.sta.isconnected()):
-                # print(f"連線中...")
                 pass
             self.ip = self.sta.ifconfig()[0]
-            print("connet successfully ", self.sta.ifconfig())
+            print("connet successfully", self.sta.ifconfig())
             return True
 
 
-class LampController:
-    def __init__(self, lamp_pin=2, light_adc=0, threshold=700):
-        self.lamp = Pin(lamp_pin, Pin.OUT)
-        self.light_sensor = ADC(light_adc)
-        self.threshold = threshold
-        self.mode = "off"
+class LED:
+    def __init__(self, r_pin, g_pin, b_pin, pwm: bool = False):
+        self.r_pin = r_pin
+        self.g_pin = g_pin
+        self.b_pin = b_pin
+        self.pwm = pwm
 
-    def handle_message(self, msg):
-        if msg == "on":
-            self.lamp.value(1)
-            self.mode = "on"
-        elif msg == "off":
-            self.lamp.value(0)
-            self.mode = "off"
-        elif msg == "auto":
-            self.mode = "auto"
-            self.auto_control()
+        if self.pwm == False:
+            self.RED = Pin(self.r_pin, Pin.OUT)
+            self.GREEN = Pin(self.g_pin, Pin.OUT)
+            self.BLUE = Pin(self.b_pin, Pin.OUT)
+            self.RED.value(0)
+            self.GREEN.value(0)
+            self.BLUE.value(0)
         else:
-            print("未知指令:", msg)
-
-    def auto_control(self):
-        light_value = self.light_sensor.read()
-        if light_value < self.threshold:
-            self.lamp.value(1)
-        else:
-            self.lamp.value(0)
-
-    def loop(self):
-        if self.mode == "auto":
-            self.auto_control()
-
-    _light_pin = None
-
-
-def _get_light_pin():
-    global _light_pin
-    if _light_pin is None:
-        _light_pin = machine.Pin(4, machine.Pin.OUT)  # D2 = GPIO4
-    return _light_pin
-
-
-def light_on():
-    pin = _get_light_pin()
-    pin.value(1)  # 開燈
-
-
-def light_off():
-    pin = _get_light_pin()
-    pin.value(0)  # 關燈
-
-
-def read_light_sensor():
-    # 假設有光敏電阻接在 ADC0
-    try:
-        adc = machine.ADC(0)
-        return adc.read()
-    except:
-        # 若無ADC可用，回傳固定值
-        return 512
-
-
-def light_auto():
-    value = read_light_sensor()
-    # 假設低於 500 代表暗（需開燈），高於 500 代表亮（關燈）
-    if value < 500:
-        light_on()
-    else:
-        light_off()
+            frequency = 1000
+            duty_cycle = 0
+            self.RED = PWM(Pin(self.r_pin), freq=frequency, duty=duty_cycle)
+            self.GREEN = PWM(Pin(self.g_pin), freq=frequency, duty=duty_cycle)
+            self.BLUE = PWM(Pin(self.b_pin), freq=frequency, duty=duty_cycle)
