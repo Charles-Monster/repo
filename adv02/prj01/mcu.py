@@ -118,24 +118,6 @@ class wifi:
             print("connet successfully", self.sta.ifconfig())
             return True
 
-
 class LED:
-    def __init__(self, r_pin, g_pin, b_pin, pwm: bool = False):
-        self.r_pin = r_pin
-        self.g_pin = g_pin
-        self.b_pin = b_pin
-        self.pwm = pwm
-
-        if self.pwm == False:
-            self.RED = Pin(self.r_pin, Pin.OUT)
-            self.GREEN = Pin(self.g_pin, Pin.OUT)
-            self.BLUE = Pin(self.b_pin, Pin.OUT)
-            self.RED.value(0)
-            self.GREEN.value(0)
-            self.BLUE.value(0)
-        else:
-            frequency = 1000
-            duty_cycle = 0
-            self.RED = PWM(Pin(self.r_pin), freq=frequency, duty=duty_cycle)
-            self.GREEN = PWM(Pin(self.g_pin), freq=frequency, duty=duty_cycle)
-            self.BLUE = PWM(Pin(self.b_pin), freq=frequency, duty=duty_cycle)
+    def __init__(self, r_pin, g_pin, b_pin,pwm:bool=False):
+        

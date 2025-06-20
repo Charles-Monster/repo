@@ -1,5 +1,4 @@
 import network
-from machine import Pin, ADC
 
 
 class gpio:
@@ -116,73 +115,3 @@ class wifi:
             self.ip = self.sta.ifconfig()[0]
             print("connet successfully ", self.sta.ifconfig())
             return True
-
-
-class LampController:
-    def __init__(self, lamp_pin=2, light_adc=0, threshold=700):
-        self.lamp = Pin(lamp_pin, Pin.OUT)
-        self.light_sensor = ADC(light_adc)
-        self.threshold = threshold
-        self.mode = "off"
-
-    def handle_message(self, msg):
-        if msg == "on":
-            self.lamp.value(1)
-            self.mode = "on"
-        elif msg == "off":
-            self.lamp.value(0)
-            self.mode = "off"
-        elif msg == "auto":
-            self.mode = "auto"
-            self.auto_control()
-        else:
-            print("未知指令:", msg)
-
-    def auto_control(self):
-        light_value = self.light_sensor.read()
-        if light_value < self.threshold:
-            self.lamp.value(1)
-        else:
-            self.lamp.value(0)
-
-    def loop(self):
-        if self.mode == "auto":
-            self.auto_control()
-
-    _light_pin = None
-
-
-def _get_light_pin():
-    global _light_pin
-    if _light_pin is None:
-        _light_pin = machine.Pin(4, machine.Pin.OUT)  # D2 = GPIO4
-    return _light_pin
-
-
-def light_on():
-    pin = _get_light_pin()
-    pin.value(1)  # 開燈
-
-
-def light_off():
-    pin = _get_light_pin()
-    pin.value(0)  # 關燈
-
-
-def read_light_sensor():
-    # 假設有光敏電阻接在 ADC0
-    try:
-        adc = machine.ADC(0)
-        return adc.read()
-    except:
-        # 若無ADC可用，回傳固定值
-        return 512
-
-
-def light_auto():
-    value = read_light_sensor()
-    # 假設低於 500 代表暗（需開燈），高於 500 代表亮（關燈）
-    if value < 500:
-        light_on()
-    else:
-        light_off()
